@@ -1,0 +1,79 @@
+---
+title: "Numbers in Colonial Maya Texts"
+author: "Alex LaPrevotte"
+date: "12 December 2025"
+format: gfm
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(pdftools)
+library(dplyr)
+library(stringr)
+```
+
+My goal for processing these data is to get the text into a format I can work with. The data, available [here](https://tesiunamdocumentos.dgb.unam.mx/ptd2025/abr_jun/0869324/Index.html), are currently in a pdf, broken into chunks of five lines:
+
+* a transcription of the original colonial Maya text (in original orthography)
+* a transcription of the text with modern orthography
+* a morphological breakdown
+* a morphological gloss
+* a Spanish translation.
+  
+  
+I am currently working with a 14-page excerpt from this PDF, selected because it begins and ends with complete 5-line chunks of text, but I am interested in trying to expand to a larger sample later. I anticipate my final working data will look like a data frame with three columns (text with modern orthography, morphological breakdown, morphological gloss) and many rows, one per word. I plan to eliminate the original orthography and Spanish translation because they contain special characters, do not correspond to the other lines in number of words, and the only way to correlate the Spanish translations with the Maya would be manually. 
+
+## Reading in the data
+
+```{r data-read-in}
+# read in the text with each page as a row
+ebtun_text <-pdf_text("private/Machault_sample.pdf")
+
+# lines to rows
+ebtun_text <- strsplit(ebtun_text, "\n")
+
+# combine all pages into one vector
+ebtun_text <- unlist(ebtun_text)
+
+# convert to dataframe
+ebtun_data <- data.frame(line = ebtun_text)
+
+# currently 1 column, 543 rows
+```
+
+## Cleaning up the rows
+
+```{r row-cleaning}
+# eliminate rows that only include numbers or spaces
+ebtun_data <- subset(ebtun_data, !grepl("^\\s*$", line) & !grepl("^\\s*\\d+\\s*$", line))
+
+# eliminate a 4-row footnote
+ebtun_data <- ebtun_data[-c(192:195), ]
+
+# reset row numbers
+rownames(ebtun_data) <- NULL
+
+# make it a dataframe again
+ebtun_data <- data.frame(line = ebtun_data, stringsAsFactors = FALSE)
+
+# currently 1 column, 340 rows
+```
+
+## Breaking the data into chunks
+
+```{r data-to-chunks}
+# my goal here is to break the data back down into the 5-line chunks that were the basis of the PDF formatting
+
+# every 5 lines to a group
+ebtun_grouped <- ebtun_data %>%
+  mutate(group = ceiling(row_number() / 5))
+
+# each group to a dataframe
+ebtun_chunks <- split(ebtun_grouped, ebtun_grouped$group)
+
+# currently 68 data frames, each two columns (lines of text and group number) and five rows
+```
+
+```{r session-info}
+sessionInfo()
+```
