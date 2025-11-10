@@ -5,7 +5,7 @@
 ## Progress report 1, 11/08/2025
 
 * I am not providing the data in the public repo yet because I am not sure about the licensing, please reach out to me for a copy.
-* I created a quarto document to hold my code for this project and rendered in into a [GitHub flavored markdown file](Numbers-in-Colinial-Maya-Texts.md).
+* I created a quarto document to hold my code for this project and rendered in into a [GitHub flavored markdown file](Numbers-in-Colonial-Maya-Texts.md).
 * I [read in the data](Numbers-in-Colonial-Maya-Texts.qmd#reading-in-the-data) I am currently working with, which is a 14-page portion of the source PDF. I selected this portion because it begins and ends with complete 5-line chunks of text, but I am interested in trying to expand to a larger sample once the pipeline is effective; this may require me to manually eliminate additional sections of text, like footnotes. By default, `pdf_text()` reads each page as a string, so I broke each line into a row using "\n" (new line character) as a delimiter, then combined all the pages into one vector and converted that to a dataframe.
 * I then worked on [cleaning up the rows](Numbers-in-Colonial-Maya-Texts.qmd#cleaning-up-the-rows), creating a subset that didn't include rows that were only spaces and numbers. I also manually eliminated four rows that were a footnote and not part of the data. I reset the row numbers (so they would not include the rows I eliminated from the subset) and converted the data back to a dataframe.
 * I [broke the data out](Numbers-in-Colonial-Maya-Texts.qmd#breaking-the-data-into-chunks) into five-line chunks to correspond with the way it was formatted in the original PDF and made each group into its own dataframe.
