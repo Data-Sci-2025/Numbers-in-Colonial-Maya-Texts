@@ -41,4 +41,4 @@
 
 ### License:
 
-* I opted to use the "GNU GPLv3" license for this project, because it is important to me that anyone who builds on the work in this project does so in a way that is accessible to as many people as possible with minimal barriers. I believe any work done with Maya data should be as accessible as possible to members of the Maya community.
+* I opted to use the ["GNU GPLv3" license](LICENSE.md) for this project, because it is important to me that anyone who builds on the work in this project does so in a way that is accessible to as many people as possible with minimal barriers. I believe any work done with Maya data should be as accessible as possible to members of the Maya community.
