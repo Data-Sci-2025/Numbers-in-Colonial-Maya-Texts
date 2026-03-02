@@ -8,9 +8,6 @@ format: gfm
 ```{r setup, include=FALSE}
 library(tidyverse)
 library(pdftools)
-library(dplyr)
-library(stringr)
-library(purrr)
 ```
 
 **I have opted to add my new code, as I go, to my existing quarto document.**
@@ -45,7 +42,10 @@ ebtun_text <- unlist(ebtun_text)
 ```{r fixing-split-words}
 # eliminating multiple spaces and spaces before and after hyphens
 # this should keep morphological breakdowns and glosses together
-ebtun_text <- str_squish(gsub("-[ /t]+","-",gsub("[ /t]+-","-",ebtun_text)))
+ebtun_text <- ebtun_text |>
+  str_replace_all("[ \\t]+-", "-") |> 
+  str_replace_all("-[ \\t]+", "-") |> 
+  str_squish()                        
 
 # eliminating null characters
 ebtun_text <- str_replace_all(ebtun_text, "\\bø\\b", "")
@@ -203,13 +203,22 @@ esp_numbers <- iconv(esp_numbers, from = "latin1", to = "UTF-8")
 maya_numbers <- iconv(maya_numbers, from = "latin1", to = "UTF-8")
 
 # does this cell contain a spanish or maya number?
+# also veriying there's a numeral in the gloss to help eliminate false positives
 ebtun <- ebtun |>
   mutate(
-    spanish_number = str_detect(breakdown, paste(esp_numbers, collapse = "|")),
-    maya_number = str_detect(breakdown, paste(maya_numbers, collapse = "|"))
+    spanish_number =
+      str_detect(breakdown, paste(esp_numbers, collapse = "|")) &
+      str_detect(gloss, "[0-9]"),
+
+    maya_number =
+      str_detect(breakdown, paste(maya_numbers, collapse = "|")) &
+      str_detect(gloss, "[0-9]")
   )
 
+view(ebtun)
 ```
+
+
 
 ```{r session-info}
 sessionInfo()
