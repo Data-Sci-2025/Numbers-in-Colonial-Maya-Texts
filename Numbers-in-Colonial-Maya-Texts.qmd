@@ -20,7 +20,7 @@ My goal for processing these data is to get the text into a format I can work wi
 * a morphological gloss
 * a Spanish translation.
   
-I am working with a 14-page excerpt from this PDF (pages 58-71), selected because it begins and ends with complete 5-line chunks of text, but I am interested in trying to expand to a larger sample in the future and I am attempting to account for situations that do not arise in the current data within the code, so it could be applied to a larger data set. I anticipate my working data, pre-analysis, will take the form of a data frame with two columns (morphological breakdown, morphological gloss) and many rows, one per word. I plan to eliminate the original orthography, modern orthography, and Spanish translation because they contain special characters, do not correspond well with the other lines in number of words, and the only way to correlate the Spanish translations with the Maya would be manually, due to differences in word order and agglutination. 
+I am working with a 200-page excerpt from this PDF (pages 301-500) and I am attempting, as much as possible, to account for situations that do not arise in the current data within the code, so it could be applied to a larger data set. I anticipate my working data, pre-analysis, will take the form of a data frame with two columns (morphological breakdown, morphological gloss) and many rows, one per word. I plan to eliminate the original orthography, modern orthography, and Spanish translation because they contain special characters, do not correspond well with the other lines in number of words, and the only way to correlate the Spanish translations with the Maya would be manually, due to differences in word order and agglutination. 
 
 ## Reading in the data
 
@@ -63,7 +63,7 @@ ebtun_data <- subset(ebtun_data, !grepl("^\\s*$", line) & !grepl("^\\s*\\d+\\s*$
 # reset row numbers
 rownames(ebtun_data) <- NULL
 
-# eliminate a 4-row footnote
+# eliminating incomplete chunks, [AND OTHER STUFF]
 ebtun_data <- ebtun_data[-c(195:198), ]
 
 # make it a dataframe again
@@ -90,7 +90,7 @@ ebtun_chunks <- split(ebtun_grouped, ebtun_grouped$group)
 ## Removing rows not used in analysis
 
 ```{r whittling-rows}
-# eliminating rows 1, 2, and 5 from each chunk
+# eliminating rows 1 (original text), 2 (modern orthography), and 5 (Spanish translation) from each chunk
 ebtun_chunks <- lapply(ebtun_chunks, function(df) {
   df[3:4, , drop = FALSE]
 })
@@ -126,7 +126,7 @@ na_counts <- sapply(ebtun_chunks, function(df) sum(is.na(df)))
 na_counts
 
 # eliminate chunks with NAs
-# noting that eliminating chunk 51 does get rid of one of my number data points; óox means three
+# [NOTE ANY ERRONEOUS DELETIONS HERE]
 ebtun_chunks_nona <- ebtun_chunks[!sapply(ebtun_chunks, function(df) any(is.na(df)))]
 
 # check to make sure number of chunks has decreased
@@ -185,7 +185,7 @@ ebtun <- ebtun |>
 str(ebtun)
 ```
 
-## Analysis
+## Analysis [REWORK]
 
 ```{r analysis, message=FALSE}
 # creating column: is this a numeral?
@@ -203,7 +203,7 @@ esp_numbers <- iconv(esp_numbers, from = "latin1", to = "UTF-8")
 maya_numbers <- iconv(maya_numbers, from = "latin1", to = "UTF-8")
 
 # does this cell contain a spanish or maya number?
-# also veriying there's a numeral in the gloss to help eliminate false positives
+# also verifying there's a numeral in the gloss to help eliminate false positives
 ebtun <- ebtun |>
   mutate(
     spanish_number =
