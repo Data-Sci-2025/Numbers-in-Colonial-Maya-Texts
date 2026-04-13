@@ -197,6 +197,7 @@ ebtun <- ebtun |>
 
 # final form of "found" data
 str(ebtun)
+view(ebtun)
 
 # currently 2 columns (morphological breakdown and morphological gloss), 3988 rows
 ```
@@ -204,12 +205,6 @@ str(ebtun)
 ## Analysis
 
 ```{r analysis, message=FALSE}
-# creating column: is this a numeral?
-ebtun <- ebtun |>
-  mutate(
-    numeral = str_detect(str_trim(breakdown), "^[0-9]+$")
-  )
-
 # reading in lists of Spanish and Maya numbers (textual)
 esp_numbers <- read_csv("data/esp_numbers.csv", col_names = FALSE) |> pull(X1)
 maya_numbers <- read_csv("data/maya_numbers.csv", col_names = FALSE) |> pull(X1)
@@ -218,20 +213,38 @@ maya_numbers <- read_csv("data/maya_numbers.csv", col_names = FALSE) |> pull(X1)
 esp_numbers <- iconv(esp_numbers, from = "latin1", to = "UTF-8")
 maya_numbers <- iconv(maya_numbers, from = "latin1", to = "UTF-8")
 
-# does this cell contain a number?
-# also verifying there's a numeral in the gloss to help eliminate false positives
+# define numbers for gloss column (numerals or spanish numbers as morph segments)
+number_pattern <- paste0(
+  "(^|-)",
+  "(",
+  "\\d+",
+  "|",
+  paste(esp_numbers, collapse = "|"),
+  ")",
+  "($|-)"
+)
+
+# find solo numbers in gloss column
 ebtun <- ebtun |>
   mutate(
-    spanish_number =
-      str_detect(breakdown, paste(esp_numbers, collapse = "|")) &
-      str_detect(gloss, "[0-9]"),
-
-    maya_number =
-      str_detect(breakdown, paste(maya_numbers, collapse = "|")) &
-      str_detect(gloss, "[0-9]")
+    gloss_number = str_detect(gloss, number_pattern)
   )
 
-view(ebtun)
+# find numerals in breakdown column
+ebtun <- ebtun |>
+  mutate(
+    numeral = str_detect(str_trim(breakdown), "(^|-)[0-9]+($|-)"))
+
+# find Maya and Spanish numbers in breakdown column
+ebtun <- ebtun |>
+  mutate(
+    maya_number =
+      str_detect(breakdown, paste(maya_numbers, collapse = "|")) &
+      gloss_number,
+    spanish_number =
+      str_detect(breakdown, paste(esp_numbers, collapse = "|")) &
+      gloss_number
+  )
 ```
 
 
