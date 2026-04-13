@@ -34,7 +34,7 @@ ebtun_text <- strsplit(ebtun_text, "\n")
 # combine all pages into one vector
 ebtun_text <- unlist(ebtun_text)
 
-# currently 1 column, 543 rows
+# currently 1 column, 7695 rows
 ```
 
 ## Combining morphological breakdowns into single units
@@ -52,24 +52,35 @@ ebtun_text <- str_replace_all(ebtun_text, "\\bø\\b", "")
 
 # convert to dataframe
 ebtun_data <- data.frame(line = ebtun_text)
+
+# still 1 column, 7695 rows
 ```
 
 ## Cleaning up the rows
 
 ```{r row-cleaning}
-# eliminate rows that only include numbers or spaces
-ebtun_data <- subset(ebtun_data, !grepl("^\\s*$", line) & !grepl("^\\s*\\d+\\s*$", line))
+# convert everything to lower case
+ebtun_data <- ebtun_data %>% mutate(across(where(is.character), tolower))
 
-# reset row numbers
-rownames(ebtun_data) <- NULL
+# eliminating incomplete chunks, parts entirely in Spanish, document titles, and footers
+# eliminating chunks where one or more lines goes onto a second row, disrupting the 5-line chunk format
+ebtun_data <- ebtun_data[-c(1, 252, 598:618, 671:676, 679:684, 885:890, 1080:1085, 1117:1122, 1133:1136, 1141:1185, 1307:1312, 1401:2043, 2079, 2558:2591, 2616, 2882:2891, 2919, 3226, 3587:3592, 3760, 3906:3981, 4748, 4826, 5384:5419, 5440, 6050, 6454:6493, 6891, 7261, 7274:7282, 7295:7315, 7401, 7689:7692), ]
 
-# eliminating incomplete chunks, [AND OTHER STUFF]
-ebtun_data <- ebtun_data[-c(195:198), ]
+# again, we make it a data frame
+ebtun_data <- data.frame(line = ebtun_data)
 
-# make it a dataframe again
+# eliminate rows that only include numbers, and spaces as well as rows that start with "doc.", "verso", or "sigue en"
+ebtun_data <- ebtun_data %>%
+  filter(
+    !grepl("^\\s*$", .data$line) &
+    !grepl("^\\s*\\d{,3}\\s*$", .data$line) &
+    !grepl("^\\s*(verso|doc\\.|sigue en)", .data$line)
+  )
+
+# make it a dataframe yet again
 ebtun_data <- data.frame(line = ebtun_data, stringsAsFactors = FALSE)
 
-# currently 1 column, 340 rows
+# currently 1 column, 3965 rows
 ```
 
 ## Breaking the data into chunks
@@ -84,7 +95,7 @@ ebtun_grouped <- ebtun_data |>
 # each group to a dataframe
 ebtun_chunks <- split(ebtun_grouped, ebtun_grouped$group)
 
-# currently 68 data frames, each two columns (text and group number) and five rows
+# currently 793 data frames, each two columns (line and group number) and five rows
 ```
 
 ## Removing rows not used in analysis
@@ -116,21 +127,24 @@ split_chunk <- function(df_chunk) {
 
 # use function on chunks
 ebtun_chunks <- lapply(ebtun_chunks, split_chunk)
+
+#currently 2 rows, 4491 columns (793 chunks)
 ```
 
 ## NA wrangling
 
 ```{r NA-wrangling}
-# which chunks have NAs?
+# which chunks have NAs? (visual check)
 na_counts <- sapply(ebtun_chunks, function(df) sum(is.na(df)))
-na_counts
+#na_counts
 
 # eliminate chunks with NAs
-# [NOTE ANY ERRONEOUS DELETIONS HERE]
 ebtun_chunks_nona <- ebtun_chunks[!sapply(ebtun_chunks, function(df) any(is.na(df)))]
 
 # check to make sure number of chunks has decreased
 length(ebtun_chunks_nona)
+
+# down to 770 chunks
 ```
 
 ## Chunk concatenation
@@ -139,7 +153,7 @@ length(ebtun_chunks_nona)
 # number of rows
 num_rows <- nrow(ebtun_chunks_nona[[1]])
 
-# concatenate rows by chunk
+# concatenate rows by chunk (this takes a while)
 ebtun_combined <- map_dfr(1:num_rows, function(i) {
   rows <- lapply(ebtun_chunks_nona, function(df) df[i, , drop = FALSE])
   suppressMessages(
@@ -160,7 +174,7 @@ ebtun_long <- t(ebtun_combined)
 # convert back to data frame
 ebtun <- as.data.frame(ebtun_long)
 
-# currently 2 columns (morphological breakdown and morphological gloss), 349 rows
+# currently 2 columns (morphological breakdown and morphological gloss), 4311 rows
 ```
 
 ## Final data cleaning
@@ -183,9 +197,11 @@ ebtun <- ebtun |>
 
 # final form of "found" data
 str(ebtun)
+
+# currently 2 columns (morphological breakdown and morphological gloss), 3988 rows
 ```
 
-## Analysis [REWORK]
+## Analysis
 
 ```{r analysis, message=FALSE}
 # creating column: is this a numeral?
@@ -202,7 +218,7 @@ maya_numbers <- read_csv("data/maya_numbers.csv", col_names = FALSE) |> pull(X1)
 esp_numbers <- iconv(esp_numbers, from = "latin1", to = "UTF-8")
 maya_numbers <- iconv(maya_numbers, from = "latin1", to = "UTF-8")
 
-# does this cell contain a spanish or maya number?
+# does this cell contain a number?
 # also verifying there's a numeral in the gloss to help eliminate false positives
 ebtun <- ebtun |>
   mutate(
