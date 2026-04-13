@@ -1,7 +1,7 @@
 ---
 title: "Numbers in Colonial Maya Texts"
 author: "Alex LaPrevotte"
-date: "12 December 2025"
+date: "30 April 2026"
 format: gfm
 ---
 
@@ -197,7 +197,6 @@ ebtun <- ebtun |>
 
 # final form of "found" data
 str(ebtun)
-view(ebtun)
 
 # currently 2 columns (morphological breakdown and morphological gloss), 3988 rows
 ```
@@ -245,6 +244,21 @@ ebtun <- ebtun |>
       str_detect(breakdown, paste(esp_numbers, collapse = "|")) &
       gloss_number
   )
+
+str(ebtun)
+#currently 6 columns, 3988 rows
+
+# counting how many numerals, Maya numbers, and Spanish numbers are in the data
+number_counts <- data.frame(
+  type = c("numeral", "maya_number", "spanish_number"),
+  count = c(
+    sum(ebtun$numeral, na.rm = TRUE),
+    sum(ebtun$maya_number, na.rm = TRUE),
+    sum(ebtun$spanish_number, na.rm = TRUE)
+  )
+)
+
+number_counts
 ```
 
 

@@ -1,6 +1,6 @@
 # Numbers in Colonial Maya Texts
 Alex LaPrevotte
-2025-12-12
+2026-04-30
 
 **I have opted to add my new code, as I go, to my existing quarto
 document.**
@@ -19,19 +19,17 @@ are currently in a PDF, broken into chunks of five lines:
 - a morphological gloss
 - a Spanish translation.
 
-I am working with a 14-page excerpt from this PDF (pages 58-71),
-selected because it begins and ends with complete 5-line chunks of text,
-but I am interested in trying to expand to a larger sample in the future
-and I am attempting to account for situations that do not arise in the
-current data within the code, so it could be applied to a larger data
-set. I anticipate my working data, pre-analysis, will take the form of a
-data frame with two columns (morphological breakdown, morphological
-gloss) and many rows, one per word. I plan to eliminate the original
-orthography, modern orthography, and Spanish translation because they
-contain special characters, do not correspond well with the other lines
-in number of words, and the only way to correlate the Spanish
-translations with the Maya would be manually, due to differences in word
-order and agglutination.
+I am working with a 200-page excerpt from this PDF (pages 301-500) and I
+am attempting, as much as possible, to account for situations that do
+not arise in the current data within the code, so it could be applied to
+a larger data set. I anticipate my working data, pre-analysis, will take
+the form of a data frame with two columns (morphological breakdown,
+morphological gloss) and many rows, one per word. I plan to eliminate
+the original orthography, modern orthography, and Spanish translation
+because they contain special characters, do not correspond well with the
+other lines in number of words, and the only way to correlate the
+Spanish translations with the Maya would be manually, due to differences
+in word order and agglutination.
 
 ## Reading in the data
 
@@ -45,7 +43,7 @@ ebtun_text <- strsplit(ebtun_text, "\n")
 # combine all pages into one vector
 ebtun_text <- unlist(ebtun_text)
 
-# currently 1 column, 543 rows
+# currently 1 column, 7695 rows
 ```
 
 ## Combining morphological breakdowns into single units
@@ -53,31 +51,45 @@ ebtun_text <- unlist(ebtun_text)
 ``` r
 # eliminating multiple spaces and spaces before and after hyphens
 # this should keep morphological breakdowns and glosses together
-ebtun_text <- str_squish(gsub("-[ /t]+","-",gsub("[ /t]+-","-",ebtun_text)))
+ebtun_text <- ebtun_text |>
+  str_replace_all("[ \\t]+-", "-") |> 
+  str_replace_all("-[ \\t]+", "-") |> 
+  str_squish()                        
 
 # eliminating null characters
 ebtun_text <- str_replace_all(ebtun_text, "\\bø\\b", "")
 
 # convert to dataframe
 ebtun_data <- data.frame(line = ebtun_text)
+
+# still 1 column, 7695 rows
 ```
 
 ## Cleaning up the rows
 
 ``` r
-# eliminate rows that only include numbers or spaces
-ebtun_data <- subset(ebtun_data, !grepl("^\\s*$", line) & !grepl("^\\s*\\d+\\s*$", line))
+# convert everything to lower case
+ebtun_data <- ebtun_data %>% mutate(across(where(is.character), tolower))
 
-# reset row numbers
-rownames(ebtun_data) <- NULL
+# eliminating incomplete chunks, parts entirely in Spanish, document titles, and footers
+# eliminating chunks where one or more lines goes onto a second row, disrupting the 5-line chunk format
+ebtun_data <- ebtun_data[-c(1, 252, 598:618, 671:676, 679:684, 885:890, 1080:1085, 1117:1122, 1133:1136, 1141:1185, 1307:1312, 1401:2043, 2079, 2558:2591, 2616, 2882:2891, 2919, 3226, 3587:3592, 3760, 3906:3981, 4748, 4826, 5384:5419, 5440, 6050, 6454:6493, 6891, 7261, 7274:7282, 7295:7315, 7401, 7689:7692), ]
 
-# eliminate a 4-row footnote
-ebtun_data <- ebtun_data[-c(195:198), ]
+# again, we make it a data frame
+ebtun_data <- data.frame(line = ebtun_data)
 
-# make it a dataframe again
+# eliminate rows that only include numbers, and spaces as well as rows that start with "doc.", "verso", or "sigue en"
+ebtun_data <- ebtun_data %>%
+  filter(
+    !grepl("^\\s*$", .data$line) &
+    !grepl("^\\s*\\d{,3}\\s*$", .data$line) &
+    !grepl("^\\s*(verso|doc\\.|sigue en)", .data$line)
+  )
+
+# make it a dataframe yet again
 ebtun_data <- data.frame(line = ebtun_data, stringsAsFactors = FALSE)
 
-# currently 1 column, 340 rows
+# currently 1 column, 3965 rows
 ```
 
 ## Breaking the data into chunks
@@ -92,13 +104,13 @@ ebtun_grouped <- ebtun_data |>
 # each group to a dataframe
 ebtun_chunks <- split(ebtun_grouped, ebtun_grouped$group)
 
-# currently 68 data frames, each two columns (text and group number) and five rows
+# currently 793 data frames, each two columns (line and group number) and five rows
 ```
 
 ## Removing rows not used in analysis
 
 ``` r
-# eliminating rows 1, 2, and 5 from each chunk
+# eliminating rows 1 (original text), 2 (modern orthography), and 5 (Spanish translation) from each chunk
 ebtun_chunks <- lapply(ebtun_chunks, function(df) {
   df[3:4, , drop = FALSE]
 })
@@ -124,33 +136,29 @@ split_chunk <- function(df_chunk) {
 
 # use function on chunks
 ebtun_chunks <- lapply(ebtun_chunks, split_chunk)
+
+#currently 2 rows, 4491 columns (793 chunks)
 ```
 
 ## NA wrangling
 
 ``` r
-# which chunks have NAs?
+# which chunks have NAs? (visual check)
 na_counts <- sapply(ebtun_chunks, function(df) sum(is.na(df)))
-na_counts
-```
+#na_counts
 
-     1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 
-     0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1 
-    27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 
-     0  0  0  0  0  0  0  0  1  0  0  0  0  0  0  0  0  1  0  0  0  0  0  0  1  0 
-    53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 
-     0  0  0  0  0  0  1  0  0  0  0  0  0  0  0  0 
-
-``` r
 # eliminate chunks with NAs
-# noting that eliminating chunk 51 does get rid of one of my number data points; óox means three
 ebtun_chunks_nona <- ebtun_chunks[!sapply(ebtun_chunks, function(df) any(is.na(df)))]
 
 # check to make sure number of chunks has decreased
 length(ebtun_chunks_nona)
 ```
 
-    [1] 63
+    [1] 770
+
+``` r
+# down to 770 chunks
+```
 
 ## Chunk concatenation
 
@@ -158,7 +166,7 @@ length(ebtun_chunks_nona)
 # number of rows
 num_rows <- nrow(ebtun_chunks_nona[[1]])
 
-# concatenate rows by chunk
+# concatenate rows by chunk (this takes a while)
 ebtun_combined <- map_dfr(1:num_rows, function(i) {
   rows <- lapply(ebtun_chunks_nona, function(df) df[i, , drop = FALSE])
   suppressMessages(
@@ -179,7 +187,7 @@ ebtun_long <- t(ebtun_combined)
 # convert back to data frame
 ebtun <- as.data.frame(ebtun_long)
 
-# currently 2 columns (morphological breakdown and morphological gloss), 349 rows
+# currently 2 columns (morphological breakdown and morphological gloss), 4311 rows
 ```
 
 ## Final data cleaning
@@ -204,19 +212,17 @@ ebtun <- ebtun |>
 str(ebtun)
 ```
 
-    'data.frame':   323 obs. of  2 variables:
-     $ breakdown: chr  "ti'" "almejen" "la'-e'" "je'ix" ...
-     $ gloss    : chr  "PREP" "almejen" "PROX-TOP" "así_como" ...
+    'data.frame':   3988 obs. of  2 variables:
+     $ breakdown: chr  "tumen" "u-comisyon" "ajaw" "aj-tepal" ...
+     $ gloss    : chr  "cause" "3a-comición" "gobernante" "ag-gobierno" ...
+
+``` r
+# currently 2 columns (morphological breakdown and morphological gloss), 3988 rows
+```
 
 ## Analysis
 
 ``` r
-# creating column: is this a numeral?
-ebtun <- ebtun |>
-  mutate(
-    numeral = str_detect(str_trim(breakdown), "^[0-9]+$")
-  )
-
 # reading in lists of Spanish and Maya numbers (textual)
 esp_numbers <- read_csv("data/esp_numbers.csv", col_names = FALSE) |> pull(X1)
 maya_numbers <- read_csv("data/maya_numbers.csv", col_names = FALSE) |> pull(X1)
@@ -225,24 +231,81 @@ maya_numbers <- read_csv("data/maya_numbers.csv", col_names = FALSE) |> pull(X1)
 esp_numbers <- iconv(esp_numbers, from = "latin1", to = "UTF-8")
 maya_numbers <- iconv(maya_numbers, from = "latin1", to = "UTF-8")
 
-# does this cell contain a spanish or maya number?
+# define numbers for gloss column (numerals or spanish numbers as morph segments)
+number_pattern <- paste0(
+  "(^|-)",
+  "(",
+  "\\d+",
+  "|",
+  paste(esp_numbers, collapse = "|"),
+  ")",
+  "($|-)"
+)
+
+# find solo numbers in gloss column
 ebtun <- ebtun |>
   mutate(
-    spanish_number = str_detect(breakdown, paste(esp_numbers, collapse = "|")),
-    maya_number = str_detect(breakdown, paste(maya_numbers, collapse = "|"))
+    gloss_number = str_detect(gloss, number_pattern)
   )
+
+# find numerals in breakdown column
+ebtun <- ebtun |>
+  mutate(
+    numeral = str_detect(str_trim(breakdown), "(^|-)[0-9]+($|-)"))
+
+# find Maya and Spanish numbers in breakdown column
+ebtun <- ebtun |>
+  mutate(
+    maya_number =
+      str_detect(breakdown, paste(maya_numbers, collapse = "|")) &
+      gloss_number,
+    spanish_number =
+      str_detect(breakdown, paste(esp_numbers, collapse = "|")) &
+      gloss_number
+  )
+
+str(ebtun)
 ```
+
+    'data.frame':   3988 obs. of  6 variables:
+     $ breakdown     : chr  "tumen" "u-comisyon" "ajaw" "aj-tepal" ...
+     $ gloss         : chr  "cause" "3a-comición" "gobernante" "ag-gobierno" ...
+     $ gloss_number  : logi  FALSE FALSE FALSE FALSE FALSE FALSE ...
+     $ numeral       : logi  FALSE FALSE FALSE FALSE FALSE FALSE ...
+     $ maya_number   : logi  FALSE FALSE FALSE FALSE FALSE FALSE ...
+     $ spanish_number: logi  FALSE FALSE FALSE FALSE FALSE FALSE ...
+
+``` r
+#currently 6 columns, 3988 rows
+
+# counting how many numerals, Maya numbers, and Spanish numbers are in the data
+number_counts <- data.frame(
+  type = c("numeral", "maya_number", "spanish_number"),
+  count = c(
+    sum(ebtun$numeral, na.rm = TRUE),
+    sum(ebtun$maya_number, na.rm = TRUE),
+    sum(ebtun$spanish_number, na.rm = TRUE)
+  )
+)
+
+number_counts
+```
+
+                type count
+    1        numeral    22
+    2    maya_number   106
+    3 spanish_number    30
 
 ``` r
 sessionInfo()
 ```
 
-    R version 4.3.0 (2023-04-21 ucrt)
-    Platform: x86_64-w64-mingw32/x64 (64-bit)
-    Running under: Windows 11 x64 (build 26100)
+    R version 4.5.1 (2025-06-13 ucrt)
+    Platform: x86_64-w64-mingw32/x64
+    Running under: Windows 11 x64 (build 26200)
 
     Matrix products: default
-
+      LAPACK version 3.12.1
 
     locale:
     [1] LC_COLLATE=English_United States.utf8 
@@ -258,19 +321,19 @@ sessionInfo()
     [1] stats     graphics  grDevices utils     datasets  methods   base     
 
     other attached packages:
-     [1] pdftools_3.5.0  lubridate_1.9.2 forcats_1.0.0   stringr_1.5.0  
-     [5] dplyr_1.1.2     purrr_1.0.1     readr_2.1.4     tidyr_1.3.0    
-     [9] tibble_3.2.1    ggplot2_3.4.2   tidyverse_2.0.0
+     [1] pdftools_3.6.0  lubridate_1.9.4 forcats_1.0.0   stringr_1.5.1  
+     [5] dplyr_1.1.4     purrr_1.1.0     readr_2.1.5     tidyr_1.3.1    
+     [9] tibble_3.3.0    ggplot2_3.5.2   tidyverse_2.0.0
 
     loaded via a namespace (and not attached):
-     [1] bit_4.0.5        gtable_0.3.3     jsonlite_1.8.4   crayon_1.5.2    
-     [5] qpdf_1.3.5       compiler_4.3.0   Rcpp_1.0.14      tidyselect_1.2.0
-     [9] parallel_4.3.0   scales_1.2.1     yaml_2.3.7       fastmap_1.1.1   
-    [13] R6_2.5.1         generics_0.1.3   knitr_1.42       munsell_0.5.0   
-    [17] pillar_1.9.0     tzdb_0.4.0       rlang_1.1.1      utf8_1.2.3      
-    [21] stringi_1.7.12   xfun_0.39        bit64_4.0.5      timechange_0.2.0
-    [25] cli_3.6.1        withr_2.5.0      magrittr_2.0.3   digest_0.6.31   
-    [29] grid_4.3.0       vroom_1.6.3      rstudioapi_0.14  askpass_1.1     
-    [33] hms_1.1.3        lifecycle_1.0.3  vctrs_0.6.2      evaluate_0.21   
-    [37] glue_1.6.2       fansi_1.0.4      colorspace_2.1-0 rmarkdown_2.21  
-    [41] tools_4.3.0      pkgconfig_2.0.3  htmltools_0.5.5 
+     [1] bit_4.6.0          gtable_0.3.6       jsonlite_2.0.0     crayon_1.5.3      
+     [5] qpdf_1.4.1         compiler_4.5.1     Rcpp_1.1.0         tidyselect_1.2.1  
+     [9] parallel_4.5.1     scales_1.4.0       yaml_2.3.10        fastmap_1.2.0     
+    [13] R6_2.6.1           generics_0.1.4     knitr_1.50         pillar_1.11.0     
+    [17] RColorBrewer_1.1-3 tzdb_0.5.0         rlang_1.1.6        stringi_1.8.7     
+    [21] xfun_0.52          bit64_4.6.0-1      timechange_0.3.0   cli_3.6.5         
+    [25] withr_3.0.2        magrittr_2.0.3     digest_0.6.37      grid_4.5.1        
+    [29] vroom_1.6.5        rstudioapi_0.17.1  askpass_1.2.1      hms_1.1.3         
+    [33] lifecycle_1.0.4    vctrs_0.6.5        evaluate_1.0.4     glue_1.8.0        
+    [37] farver_2.1.2       rmarkdown_2.29     tools_4.5.1        pkgconfig_2.0.3   
+    [41] htmltools_0.5.8.1 
