@@ -205,8 +205,8 @@ str(ebtun)
 
 ```{r analysis, message=FALSE}
 # reading in lists of Spanish and Maya numbers (textual)
-esp_numbers <- read_csv("data/esp_numbers.csv", col_names = FALSE) |> pull(X1)
-maya_numbers <- read_csv("data/maya_numbers.csv", col_names = FALSE) |> pull(X1)
+esp_numbers <- read_lines("data/esp_numbers.txt")
+maya_numbers <- read_lines("data/maya_numbers.txt")
 
 # fix encoding for accents
 esp_numbers <- iconv(esp_numbers, from = "latin1", to = "UTF-8")
@@ -259,6 +259,8 @@ number_counts <- data.frame(
 )
 
 number_counts
+
+view(ebtun)
 ```
 
 
