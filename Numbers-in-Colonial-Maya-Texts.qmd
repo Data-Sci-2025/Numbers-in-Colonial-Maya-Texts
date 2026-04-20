@@ -272,7 +272,6 @@ number_counts
 ```
 
 ### Creating 4-grams
-
 ```{r 4-grams}
 breakdown_tokens <- str_split(ebtun$breakdown, "\\s+") |> unlist()
 gloss_tokens     <- str_split(ebtun$gloss, "\\s+") |> unlist()
@@ -344,22 +343,28 @@ cn_pairs <- bind_rows(
   filter(cn == TRUE)
 
 # I used this to visually review things glossed as numeral classifiers, but with which I was not familiar
-#view(cn_pairs)
+# view(cn_pairs)
 
 # adding the other classifiers to the existing vector
 classifiers <- c(classifiers, "p'is", "tsuk", "k'al")
 
 # collapse to one regex
-classifier_pattern <- paste(classifiers, collapse = "|")
+classifier_pattern <- paste0(
+  "(^|-)",
+  "(",
+  paste(classifiers, collapse = "|"),
+  ")",
+  "($|-)"
+)
 
 # looking for classifier locations in 4_grams
 number_4grams <- number_4grams |>
   mutate(
-    c1 = str_detect(b1, classifier_pattern),
-    c2 = str_detect(b2, classifier_pattern),
-    c3 = str_detect(b3, classifier_pattern),
-    c4 = str_detect(b4, classifier_pattern)
-  )+
+    c1 = str_detect(str_trim(b1), classifier_pattern),
+    c2 = str_detect(str_trim(b2), classifier_pattern),
+    c3 = str_detect(str_trim(b3), classifier_pattern),
+    c4 = str_detect(str_trim(b4), classifier_pattern)
+  )
 
 # count by number type and position
 classifier_counts <- number_4grams |>
@@ -374,19 +379,99 @@ classifier_counts <- number_4grams |>
 view (classifier_counts)
 ```
 
-```{r}
+```{r seeing-classifiers}
 # does 4-gram contain a classifier
 number_4grams <- number_4grams |>
   mutate(
     classifier_any = c1 | c2 | c3 | c4
   )
 
+# filtering for true
 classifier_4grams <- number_4grams |>
   filter(classifier_any)
 
 view(classifier_4grams)
 ```
 
+## Data Visualization
+
+```{r viz-number-by-type}
+# pie chart proportion of each kind of number
+ggplot(
+  number_counts |>
+    mutate(prop = count / sum(count),
+           label = paste0(type, " (", scales::percent(prop), ")")),
+  aes(x = "", y = count, fill = type)
+) +
+  geom_col(width = 1) +
+  coord_polar(theta = "y") +
+  geom_text(
+    aes(label = label),
+    position = position_stack(vjust = 0.5),
+    size = 3
+  ) +
+  labs(
+    title = "Distribution of Number Types",
+    fill = "Type"
+  ) +
+  theme_void()
+```
+
+```{r viz-classifier-by-type}
+# count classifier occurrence by number type
+classifier_language_counts <- number_4grams |>
+  filter(classifier_any) |>
+  count(number_type)
+
+classifier_language_counts <- classifier_language_counts |>
+  mutate(prop = n / sum(n),
+         label = paste0(number_type, " (", scales::percent(prop), ")"))
+
+# pie chart for classifier count by number type
+ggplot(classifier_language_counts, aes(x = "", y = n, fill = number_type)) +
+  geom_col(width = 1) +
+  coord_polar(theta = "y") +
+  geom_text(aes(label = label),
+            position = position_stack(vjust = 0.5)) +
+  labs(
+    title = "Type of Numbers Used with Classifiers",
+    fill = "Number Type"
+  ) +
+  theme_void()
+```
+
+```{r viz-classifier-location}
+# pivoting classifier location counts
+classifier_position_counts <- classifier_counts |>
+  pivot_longer(
+    cols = starts_with("token"),
+    names_to = "position",
+    values_to = "count"
+  )
+
+# cleaning up my x-axis
+classifier_position_counts <- classifier_position_counts |>
+  mutate(position = str_remove(position, "token"))
+
+# collapsing number type because they're all Maya
+classifier_position_counts_simple <- classifier_position_counts |>
+  group_by(position) |>
+  summarise(count = sum(count), .groups = "drop")
+
+# bar graph
+# and I added the orange from the pie chart for visual consistency
+ggplot(classifier_position_counts_simple,
+       aes(x = position, y = count)) +
+  geom_col(fill = "#F8766D") +
+  geom_text(aes(label = count),
+            vjust = -0.3) +
+  labs(
+    title = "Classifier Position Within 4-grams",
+    x = "Position",
+    y = "Count"
+  ) +
+  theme_minimal()
+```
 
 ```{r session-info}
 sessionInfo()
