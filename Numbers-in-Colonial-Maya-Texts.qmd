@@ -473,6 +473,30 @@ ggplot(classifier_position_counts_simple,
   theme_minimal()
 ```
 
+```{r viz-classifier-frequency}
+# extracting and counting classifiers
+classifier_freq <- number_4grams |>
+  select(b1, b2, b3, b4) |>
+  pivot_longer(everything(), values_to = "token") |>
+  filter(str_detect(token, classifier_pattern)) |>
+  mutate(classifier = str_match(token, classifier_pattern)[,3]) |>
+  count(classifier, sort = TRUE)
+
+# bar graph
+ggplot(classifier_freq,
+       aes(x = reorder(classifier, n), y = n)) +
+  geom_col(fill = "#F8766D") +
+  geom_text(aes(label = n),
+            hjust = -0.1) +
+  coord_flip() +
+  labs(
+    title = "Frequency of Classifiers",
+    x = "Classifier",
+    y = "Count"
+  ) +
+  theme_minimal()
+```
+
 ```{r session-info}
 sessionInfo()
 ```

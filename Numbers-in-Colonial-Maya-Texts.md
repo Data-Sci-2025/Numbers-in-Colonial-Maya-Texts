@@ -428,6 +428,8 @@ classifier_4grams <- number_4grams |>
 view(classifier_4grams)
 ```
 
+## Data Visualization
+
 ``` r
 # pie chart proportion of each kind of number
 ggplot(
@@ -511,6 +513,32 @@ ggplot(classifier_position_counts_simple,
 ```
 
 ![](Numbers-in-Colonial-Maya-Texts_files/figure-commonmark/viz-classifier-location-1.png)
+
+``` r
+# extracting and counting classifiers
+classifier_freq <- number_4grams |>
+  select(b1, b2, b3, b4) |>
+  pivot_longer(everything(), values_to = "token") |>
+  filter(str_detect(token, classifier_pattern)) |>
+  mutate(classifier = str_match(token, classifier_pattern)[,3]) |>
+  count(classifier, sort = TRUE)
+
+# bar graph
+ggplot(classifier_freq,
+       aes(x = reorder(classifier, n), y = n)) +
+  geom_col(fill = "#F8766D") +
+  geom_text(aes(label = n),
+            hjust = -0.1) +
+  coord_flip() +
+  labs(
+    title = "Frequency of Classifiers",
+    x = "Classifier",
+    y = "Count"
+  ) +
+  theme_minimal()
+```
+
+![](Numbers-in-Colonial-Maya-Texts_files/figure-commonmark/viz-classifier-frequency-1.png)
 
 ``` r
 sessionInfo()
