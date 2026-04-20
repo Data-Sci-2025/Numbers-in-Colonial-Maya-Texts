@@ -8,6 +8,7 @@ format: gfm
 ```{r setup, include=FALSE}
 library(tidyverse)
 library(pdftools)
+library(purrr)
 ```
 
 **I have opted to add my new code, as I go, to my existing quarto document.**
@@ -273,9 +274,6 @@ number_counts
 ### Creating 4-grams
 
 ```{r 4-grams}
-library(purrr)
-library(tibble)
-
 breakdown_tokens <- str_split(ebtun$breakdown, "\\s+") |> unlist()
 gloss_tokens     <- str_split(ebtun$gloss, "\\s+") |> unlist()
 
@@ -293,25 +291,102 @@ number_4grams <- purrr::map_dfr(num_positions, function(pos) {
   
   b_gram <- breakdown_tokens[pos:min(pos + 3, length(breakdown_tokens))]
   g_gram <- gloss_tokens[pos:min(pos + 3, length(gloss_tokens))]
-  
   tibble(
     index = pos,
     row = row_index[pos],
-    
     number = breakdown_tokens[pos],
-    
     b1 = b_gram[1], b2 = b_gram[2], b3 = b_gram[3], b4 = b_gram[4],
     g1 = g_gram[1], g2 = g_gram[2], g3 = g_gram[3], g4 = g_gram[4]
   )
 })
 
-#library(openxlsx)
-
-#write.xlsx(
-#  number_4grams,
-#  file = "data/number_4grams.xlsx"
-#)
+number_4grams <- number_4grams |>
+  mutate(
+    number_type = case_when(
+      ebtun$numeral[row] ~ "numeral",
+      ebtun$maya_number[row] ~ "maya",
+      ebtun$spanish_number[row] ~ "spanish",
+      TRUE ~ "unknown"
+    )
+  )
 ```
+
+```{r finding-classifiers}
+# read in a list of known classifiers
+classifiers <- read_lines("data/classifiers.txt")
+classifiers <- stringi::stri_trans_nfc(classifiers)
+
+# there are classifiers in this text I'm not familiar with, but at least some of them were glossed as "cn" so I am finding those and adding them to the above-created vector
+
+# many classifiers are glossed with "cn"
+cn_pattern <- "(^cn$)|(^cn-)|(-cn$)|(-cn-)"
+
+# looking for "cn" morphemes in gloss
+number_4grams <- number_4grams |>
+  mutate(
+    g1_cn = str_detect(g1, cn_pattern),
+    g2_cn = str_detect(g2, cn_pattern),
+    g3_cn = str_detect(g3, cn_pattern),
+    g4_cn = str_detect(g4, cn_pattern)
+  )
+
+# filter for matches
+cn_4grams <- number_4grams |>
+  filter(g1_cn | g2_cn | g3_cn | g4_cn)
+
+# extract pairs
+cn_pairs <- bind_rows(
+  cn_4grams |> transmute(number_type, position = 1, b = b1, g = g1, cn = g1_cn),
+  cn_4grams |> transmute(number_type, position = 2, b = b2, g = g2, cn = g2_cn),
+  cn_4grams |> transmute(number_type, position = 3, b = b3, g = g3, cn = g3_cn),
+  cn_4grams |> transmute(number_type, position = 4, b = b4, g = g4, cn = g4_cn)
+) |>
+  filter(cn == TRUE)
+
+# I used this to visually review things glossed as numeral classifiers, but with which I was not familiar
+#view(cn_pairs)
+
+# adding the other classifiers to the existing vector
+classifiers <- c(classifiers, "p'is", "tsuk", "k'al")
+
+# collapse to one regex
+classifier_pattern <- paste(classifiers, collapse = "|")
+
+# looking for classifier locations in 4_grams
+number_4grams <- number_4grams |>
+  mutate(
+    c1 = str_detect(b1, classifier_pattern),
+    c2 = str_detect(b2, classifier_pattern),
+    c3 = str_detect(b3, classifier_pattern),
+    c4 = str_detect(b4, classifier_pattern)
+  )+
+
+# count by number type and position
+classifier_counts <- number_4grams |>
+  group_by(number_type) |>
+  summarise(
+    token1 = sum(c1, na.rm = TRUE),
+    token2 = sum(c2, na.rm = TRUE),
+    token3 = sum(c3, na.rm = TRUE),
+    token4 = sum(c4, na.rm = TRUE)
+  )
+
+view (classifier_counts)
+```
+
+```{r}
+# does 4-gram contain a classifier
+number_4grams <- number_4grams |>
+  mutate(
+    classifier_any = c1 | c2 | c3 | c4
+  )
+
+classifier_4grams <- number_4grams |>
+  filter(classifier_any)
+
+view(classifier_4grams)
+```
+
 
 ```{r session-info}
 sessionInfo()
