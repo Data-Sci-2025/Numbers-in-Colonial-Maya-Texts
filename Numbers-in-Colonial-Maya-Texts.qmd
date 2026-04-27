@@ -1,7 +1,7 @@
 ---
 title: "Numbers in Colonial Maya Texts"
 author: "Alex LaPrevotte"
-date: "30 April 2026"
+date: "27 April 2026"
 format: gfm
 ---
 
@@ -57,6 +57,7 @@ ebtun_text <- str_replace_all(ebtun_text, "\\bø\\b", "")
 ebtun_data <- data.frame(line = ebtun_text)
 
 summary(ebtun_data)
+view(ebtun_data)
 # still 1 column, 7695 rows
 ```
 
@@ -102,8 +103,7 @@ ebtun_grouped <- ebtun_data |>
          type = rep(c("original", "Maya", "morphemes", "glossed", "Spanish"),
                     length.out=n()))
 
-view(ebtun_grouped)
-# currently 794 data frames, each three columns (line, group number, and type) and five rows
+# currently 3970 rows, three columns (line, group number, and type), 794 groups of five rows
 ```
 
 ## Removing rows not used in analysis
