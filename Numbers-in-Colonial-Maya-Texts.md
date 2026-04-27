@@ -2,9 +2,6 @@
 Alex LaPrevotte
 2026-04-30
 
-**I have opted to add my new code, as I go, to my existing quarto
-document.**
-
 My goal for processing these data is to get the text into a format I can
 work with. The data, available as part of “Los títulos de ebtún :
 transcripción, traducción y análisis histórico,” the PhD dissertation of
@@ -43,6 +40,13 @@ ebtun_text <- strsplit(ebtun_text, "\n")
 # combine all pages into one vector
 ebtun_text <- unlist(ebtun_text)
 
+summary(ebtun_text)
+```
+
+       Length     Class      Mode 
+         7695 character character 
+
+``` r
 # currently 1 column, 7695 rows
 ```
 
@@ -62,6 +66,15 @@ ebtun_text <- str_replace_all(ebtun_text, "\\bø\\b", "")
 # convert to dataframe
 ebtun_data <- data.frame(line = ebtun_text)
 
+summary(ebtun_data)
+```
+
+         line          
+     Length:7695       
+     Class :character  
+     Mode  :character  
+
+``` r
 # still 1 column, 7695 rows
 ```
 
@@ -74,6 +87,15 @@ ebtun_data <- ebtun_data %>% mutate(across(where(is.character), tolower))
 # eliminating incomplete chunks, parts entirely in Spanish, document titles, and footers
 # eliminating chunks where one or more lines goes onto a second row, disrupting the 5-line chunk format
 ebtun_data <- ebtun_data[-c(1, 252, 598:618, 671:676, 679:684, 885:890, 1080:1085, 1117:1122, 1133:1136, 1141:1185, 1307:1312, 1401:2043, 2079, 2558:2591, 2616, 2882:2891, 2919, 3226, 3587:3592, 3760, 3906:3981, 4748, 4826, 5384:5419, 5440, 6050, 6454:6493, 6891, 7261, 7274:7282, 7295:7315, 7401, 7689:7692), ]
+
+summary(ebtun_data)
+```
+
+       Length     Class      Mode 
+         6696 character character 
+
+``` r
+# currently 1 column, 6696 rows
 
 # again, we make it a data frame
 ebtun_data <- data.frame(line = ebtun_data)
@@ -89,7 +111,16 @@ ebtun_data <- ebtun_data %>%
 # make it a dataframe yet again
 ebtun_data <- data.frame(line = ebtun_data, stringsAsFactors = FALSE)
 
-# currently 1 column, 3965 rows
+summary(ebtun_data)
+```
+
+         line          
+     Length:3970       
+     Class :character  
+     Mode  :character  
+
+``` r
+# currently 1 column, 3970 rows
 ```
 
 ## Breaking the data into chunks
@@ -103,17 +134,14 @@ ebtun_grouped <- ebtun_data |>
          type = rep(c("original", "Maya", "morphemes", "glossed", "Spanish"),
                     length.out=n()))
 
-# currently 793 data frames, each two columns (line and group number) and five rows
+view(ebtun_grouped)
+# currently 794 data frames, each three columns (line, group number, and type) and five rows
 ```
 
 ## Removing rows not used in analysis
 
 ``` r
 # eliminating rows 1 (original text), 2 (modern orthography), and 5 (Spanish translation) from each chunk
-#ebtun_chunks <- lapply(ebtun_chunks, function(df) {
-#  df[3:4, , drop = FALSE]
-#})
-
 ebtun_grouped <- ebtun_grouped |>
   filter(type %in% c("morphemes", "glossed"))
 
@@ -142,7 +170,7 @@ split_chunk <- function(df_chunk) {
 # use function on chunks
 ebtun_chunks <- lapply(ebtun_chunks, split_chunk)
 
-#currently 2 rows, 4491 columns (793 chunks)
+#currently 2 rows, 4492 columns (794 chunks)
 ```
 
 ## NA wrangling
@@ -192,8 +220,14 @@ ebtun_long <- t(ebtun_combined)
 # convert back to data frame
 ebtun <- as.data.frame(ebtun_long)
 
-# currently 2 columns (morphological breakdown and morphological gloss), 4311 rows
+# currently 2 columns (morphological breakdown and morphological gloss), 4312 rows
+summary(ebtun)
 ```
+
+          V1                 V2           
+     Length:4312        Length:4312       
+     Class :character   Class :character  
+     Mode  :character   Mode  :character  
 
 ## Final data cleaning
 
@@ -240,7 +274,7 @@ maya_numbers <- stringi::stri_trans_nfc(maya_numbers)
 ebtun$breakdown <- stringi::stri_trans_nfc(ebtun$breakdown)
 ebtun$gloss <- stringi::stri_trans_nfc(ebtun$gloss)
 
-# define numbers for gloss column (numerals or spanish numbers as morph segments)
+# define numbers for gloss column (numerals or Spanish numbers as morph segments)
 number_pattern <- paste0(
   "(^|-)",
   "(",
@@ -308,21 +342,25 @@ number_counts
 ### Creating 4-grams
 
 ``` r
+# split breakdown and gloss into tokens then unlist into 2 vectors
 breakdown_tokens <- str_split(ebtun$breakdown, "\\s+") |> unlist()
 gloss_tokens     <- str_split(ebtun$gloss, "\\s+") |> unlist()
 
+# map tokens back to rows
 row_index <- rep(seq_len(nrow(ebtun)), times = lengths(str_split(ebtun$breakdown, "\\s+")))
 
+# identify rows that contain numbers
 valid_rows <- which(
   ebtun$numeral |
   ebtun$maya_number |
   ebtun$spanish_number
 )
 
+# link token positions to rows with numbers
 num_positions <- which(row_index %in% valid_rows)
 
+# construct 4-gram for each number
 number_4grams <- purrr::map_dfr(num_positions, function(pos) {
-  
   b_gram <- breakdown_tokens[pos:min(pos + 3, length(breakdown_tokens))]
   g_gram <- gloss_tokens[pos:min(pos + 3, length(gloss_tokens))]
   tibble(
@@ -334,6 +372,7 @@ number_4grams <- purrr::map_dfr(num_positions, function(pos) {
   )
 })
 
+# identify number type for each 4gram
 number_4grams <- number_4grams |>
   mutate(
     number_type = case_when(
@@ -345,12 +384,14 @@ number_4grams <- number_4grams |>
   )
 ```
 
+### Finding classifiers
+
 ``` r
 # read in a list of known classifiers
 classifiers <- read_lines("data/classifiers.txt")
 classifiers <- stringi::stri_trans_nfc(classifiers)
 
-# there are classifiers in this text I'm not familiar with, but at least some of them were glossed as "cn" so I am finding those and adding them to the above-created vector
+# there are classifiers in this text I'm not familiar with, I am finding those glossed as "cn" and adding them to the above-created vector
 
 # many classifiers are glossed with "cn"
 cn_pattern <- "(^cn$)|(^cn-)|(-cn$)|(-cn-)"
@@ -410,9 +451,9 @@ classifier_counts <- number_4grams |>
     token3 = sum(c3, na.rm = TRUE),
     token4 = sum(c4, na.rm = TRUE)
   )
-
-view (classifier_counts)
 ```
+
+### List of 4-grams with classifiers
 
 ``` r
 # does 4-gram contain a classifier
@@ -430,29 +471,48 @@ view(classifier_4grams)
 
 ## Data Visualization
 
+### Number by type
+
 ``` r
-# pie chart proportion of each kind of number
-ggplot(
-  number_counts |>
-    mutate(prop = count / sum(count),
-           label = paste0(type, " (", scales::percent(prop), ")")),
-  aes(x = "", y = count, fill = type)
-) +
-  geom_col(width = 1) +
-  coord_polar(theta = "y") +
-  geom_text(
-    aes(label = label),
-    position = position_stack(vjust = 0.5),
-    size = 3
-  ) +
-  labs(
-    title = "Distribution of Number Types",
-    fill = "Type"
-  ) +
-  theme_void()
+number_counts
 ```
 
-![](Numbers-in-Colonial-Maya-Texts_files/figure-commonmark/viz-number-by-type-1.png)
+                type count
+    1        numeral    23
+    2    maya_number   106
+    3 spanish_number    34
+
+``` r
+# stacked bar chart
+ggplot(
+  number_counts,
+  aes(x = "", y = count, fill = type)
+) +
+  geom_col(width = 0.6) +
+  labs(
+    title = "Distribution of Number Types",
+    fill = "Type",
+    x = NULL,
+    y = "Count"
+  ) +
+  theme_minimal()
+```
+
+![](data_visualization/viz-number-by-type-1.png)
+
+### Classifier occurence by number type
+
+``` r
+# where are classifiers occurring?
+classifier_counts
+```
+
+    # A tibble: 3 × 5
+      number_type token1 token2 token3 token4
+      <chr>        <int>  <int>  <int>  <int>
+    1 maya            60      5      7      8
+    2 numeral          0      0      0      0
+    3 spanish          0      0      0      0
 
 ``` r
 # count classifier occurrence by number type
@@ -460,24 +520,18 @@ classifier_language_counts <- number_4grams |>
   filter(classifier_any) |>
   count(number_type)
 
-classifier_language_counts <- classifier_language_counts |>
-  mutate(prop = n / sum(n),
-         label = paste0(number_type, " (", scales::percent(prop), ")"))
-
 # pie chart for classifier count by number type
+# I know pie charts aren't popular, but this one is at least funny
 ggplot(classifier_language_counts, aes(x = "", y = n, fill = number_type)) +
   geom_col(width = 1) +
   coord_polar(theta = "y") +
-  geom_text(aes(label = label),
-            position = position_stack(vjust = 0.5)) +
-  labs(
-    title = "Type of Numbers Used with Classifiers",
-    fill = "Number Type"
-  ) +
+  labs( title = "Type of Numbers Used with Classifiers", fill = "Number Type" ) +
   theme_void()
 ```
 
-![](Numbers-in-Colonial-Maya-Texts_files/figure-commonmark/viz-classifier-by-type-1.png)
+![](data_visualization/viz-classifier-by-type-1.png)
+
+### Classifier location
 
 ``` r
 # pivoting classifier location counts
@@ -502,8 +556,6 @@ classifier_position_counts_simple <- classifier_position_counts |>
 ggplot(classifier_position_counts_simple,
        aes(x = position, y = count)) +
   geom_col(fill = "#F8766D") +
-  geom_text(aes(label = count),
-            vjust = -0.3) +
   labs(
     title = "Classifier Position Within 4-grams",
     x = "Position",
@@ -512,7 +564,9 @@ ggplot(classifier_position_counts_simple,
   theme_minimal()
 ```
 
-![](Numbers-in-Colonial-Maya-Texts_files/figure-commonmark/viz-classifier-location-1.png)
+![](data_visualization/viz-classifier-location-1.png)
+
+### Classifier frequency
 
 ``` r
 # extracting and counting classifiers
@@ -527,8 +581,6 @@ classifier_freq <- number_4grams |>
 ggplot(classifier_freq,
        aes(x = reorder(classifier, n), y = n)) +
   geom_col(fill = "#F8766D") +
-  geom_text(aes(label = n),
-            hjust = -0.1) +
   coord_flip() +
   labs(
     title = "Frequency of Classifiers",
@@ -538,7 +590,7 @@ ggplot(classifier_freq,
   theme_minimal()
 ```
 
-![](Numbers-in-Colonial-Maya-Texts_files/figure-commonmark/viz-classifier-frequency-1.png)
+![](data_visualization/viz-classifier-frequency-1.png)
 
 ``` r
 sessionInfo()
@@ -575,9 +627,9 @@ sessionInfo()
      [9] parallel_4.5.1     scales_1.4.0       yaml_2.3.10        fastmap_1.2.0     
     [13] R6_2.6.1           labeling_0.4.3     generics_0.1.4     knitr_1.50        
     [17] pillar_1.11.0      RColorBrewer_1.1-3 tzdb_0.5.0         rlang_1.1.6       
-    [21] stringi_1.8.7      xfun_0.52          bit64_4.6.0-1      timechange_0.3.0  
-    [25] cli_3.6.5          withr_3.0.2        magrittr_2.0.3     digest_0.6.37     
-    [29] grid_4.5.1         vroom_1.6.5        rstudioapi_0.17.1  askpass_1.2.1     
-    [33] hms_1.1.3          lifecycle_1.0.4    vctrs_0.6.5        evaluate_1.0.4    
-    [37] glue_1.8.0         farver_2.1.2       rmarkdown_2.29     tools_4.5.1       
-    [41] pkgconfig_2.0.3    htmltools_0.5.8.1 
+    [21] utf8_1.2.6         stringi_1.8.7      xfun_0.52          bit64_4.6.0-1     
+    [25] timechange_0.3.0   cli_3.6.5          withr_3.0.2        magrittr_2.0.3    
+    [29] digest_0.6.37      grid_4.5.1         vroom_1.6.5        rstudioapi_0.17.1 
+    [33] askpass_1.2.1      hms_1.1.3          lifecycle_1.0.4    vctrs_0.6.5       
+    [37] evaluate_1.0.4     glue_1.8.0         farver_2.1.2       rmarkdown_2.29    
+    [41] tools_4.5.1        pkgconfig_2.0.3    htmltools_0.5.8.1 
