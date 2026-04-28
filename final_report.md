@@ -62,7 +62,7 @@ I also found that with Maya numbers, numeral classifiers overwhelmingly occur in
 **Figure 3**  
 ![Bar chart of classifier location within 4-grams](figures/viz-classifier-location-1.png)
 
-The other question for me, which was not really one of my research questions but I found myself curious, was how frequently each observed classifier was used (Fig. 4). This took a bit of finagling to get a useful result, because if I just counted the classifiers by token, I got the whole words that the classifier was usually only a part of, which led to far too many individual tokens. I instead counted them by which classifier from the list was found within each token, which gave a more useful but still imperfect token frequency; one classifier shows up twice with two separate counts, as it is spelled two different ways in the data (*téen* vs *ten*). The full list of observed classifiers and their meanings is below:
+The other question for me, which was not really one of my research questions but I found myself curious, was how frequently each observed classifier was used (Fig. 4). This took a bit of finagling to get a useful result, because if I just counted the classifiers by token, I got the whole words that the classifier was usually only a part of, which led to far too many individual tokens instead of overall trends. I instead counted them by which classifier from the list was found within each token, which gave a more useful but still imperfect token frequency; one classifier shows up twice with two separate counts, as it is spelled two different ways in the data (*téen* vs *ten*). The full list of observed classifiers and their meanings is below:
 
 * *k'al* - this can mean "bundles" or can be the number 20
 * *p'éel* - inanimate objects
