@@ -18,10 +18,10 @@ This dissertation contains digitized and analyzed colonial-era Maya and Spanish 
 
 ## Repository Structure
 
-* **[final_report.md](final_report.md)**
+* **[final_report.md](final_report.md)**  
   Final paper, presenting research questions, methodology, results, and interpretation
   
-* [presentation_slides.pdf](presentation_slides.pdf)
+* [presentation_slides.pdf](presentation_slides.pdf)  
   Presentation of analysis and findings
 
 * [README.md](README.md)  
