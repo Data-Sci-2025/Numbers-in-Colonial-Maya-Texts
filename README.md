@@ -1,7 +1,7 @@
 # Numbers-in-Colonial-Maya-Texts
 
-**Author:** Alex LaPrevotte
-**Email:** alaprevo@gmail.com
+**Author:** Alex LaPrevotte  
+**Email:** alaprevo@gmail.com  
 **Date:** 27 April 2026
 
 ## Project Overview
