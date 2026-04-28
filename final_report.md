@@ -7,15 +7,15 @@ Alex LaPrevotte
 Maya, sometimes called Yucatec Maya, is one of approximately 30 living Mayan languages, and is spoken by over 750,000 people across Mexico and Belize. It should be noted from the outset that despite recent efforts by the government of Mexico, Maya is not and never has been a standardized language, so it is common to see the same word spelled different ways, as well as variation in morphology and syntax. In Maya, numbers are generally accompanied by numeral classifiers. Numeral classifiers are words or affixes appended to numbers, which express characteristics of that number. They can describe the thing being numbered qualitatively, indicating animacy, shape, or composition, or they can describe the thing quantitatively, by size, weight, or volume. Numeral classifiers in modern Maya are often described as “obligatory” (Butler, Macri), but analysis of contemporary usage, including observations from fieldwork in Yucatán (2024, 2025), indicates that this is only the case when the number is Maya in origin. However, Maya-origin numbers are not the only thing that needs consideration; Spanish numbers are used frequently in modern Maya (Ager). In my experience with native Maya speakers, Maya numbers are used in most situations for numbers one through three, sometimes for four, rarely for five, and almost never for six and up. Spanish numbers are not always paired with classifiers and when they are, the classifier appears in a different form, though it carries the same meaning.
 
 Maya:
->kanp'éel ja'as
->kan-p'éel ja'as
->four-CL.INAN banana
+>kanp'éel ja'as  
+>kan-p'éel ja'as  
+>four-CL.INAN banana  
 >four bananas
 
 Spanish:
->kwaatro u p'éelel ja'as
->kwaatro u p'éel-el ja'as
->four 3s CL.INAN-NOM banana
+>kwaatro u p'éelel ja'as  
+>kwaatro u p'éel-el ja'as  
+>four 3s CL.INAN-NOM banana  
 >four bananas
 
 ## Research Questions
@@ -47,19 +47,19 @@ From this point, I broke the data into 794 five-line [chunks](Numbers-in-Colonia
 
 Since my analysis was focused around numbers, my first task was to [find the numbers](Numbers-in-Colonial-Maya-Texts.md#finding-numbers) in the text. The non-standardized nature of the Maya language allows a lot of room for variation. I started with creating and reading in lists of Maya and Spanish numbers with their most common spellings. The most common spellings for Spanish numbers in Maya do not necessarily correspond to the way they are spelled in Spanish (*e.g.* "quatro" is generally spelled "kwaatro" in Maya), so I included both variations and also normalized everything for accents. Then, I went through and identified all of the numbers in the gloss column; numbers were either glossed with numerals (0-9) or modern Spanish spellings. I only looked at glossed numbers that were treated as separate morphological units, those that started and ended with either word boundaries or hyphens, so as not to pick up false positives where numbers might have been part of longer, non-number glosses (such as third person, etc.). I reviewed numbers in the gloss column that did not appear to correspond to Maya numbers, Spanish numbers, or numerals in the breakdown column and found a few additional spellings, which I added into the number data sets. To be included in the analysis, a number had to be identified in both the breakdown and gloss columns. The final counts across the sample were 23 numerals, 106 Maya numbers, and 34 Spanish numbers (Fig. 1). It is noteworthy here that both Maya and Spanish numbers are over-represented, because higher numbers in both languages are often broken down into multiple words (*e.g.* "75" may correspond to "óox k’áal jo’lajun" in Maya and "setenta y cinco" in Spanish). I created [4-grams](Numbers-in-Colonial-Maya-Texts.md#4-grams), starting with each identified number, so I could see the three words that followed it.
 
-Figure 1
+**Figure 1**  
 ![Bar chart showing the distribution of number types](figures/viz-number-by-type-1.png)
 
 I also needed to [identify the classifiers](Numbers-in-Colonial-Maya-Texts.md#finding-classifiers). I followed a similar protocol to numbers and started by reading in a list of classifiers that are relatively common in modern Maya. I did a manual review of the data for any classifiers I may have missed, and found several things in the classifier position which had not been picked up. I ultimately decided what to include based on the gloss. Some of the morphemes that seemed to function as classifiers were glossed as units of measurements, and others as "CL" (Clasificador Numeral), so I compiled a list of the three morphemes glossed as CL which were not already on the classifier list and added them. As with numbers, I only used classifiers in my analysis that were isolated in their own morpheme, to eliminate false positives where those groupings of letters were found within other words. This did eliminate some instances of possible classifiers that exhibit polysemy and can function as classifiers or as words in other contexts. For example, "k'aal," can mean "bundles" or "twenty," so "ooxk'aal" could be translated as "three bundles" (with a classifier) or "sixty" (sans classifier). I deferred to Dr. Machault's expertise as the translator in these cases and went with however he glossed it.
 
 I then set about locating the identified classifiers within the 4-grams. I generated a count of classifiers by type of number and position. It was a surprise, if not a huge one, to find that classifiers only occurred with Maya numbers, never with Spanish numbers or numerals (Fig. 2). I visually reviewed the data to see why that may be and found that all but 3 numerals and 2 Spanish numbers were used in date expressions. In this context, it makes sense that numeral classifiers wouldn't be used, as the Maya had a totally different timekeeping system than the Spaniards, so expressing Gregorian dates in the Maya language would defy existing linguistic conventions. 
 
-Figure 2
+**Figure 2**  
 ![Distribution of number types: one hundred percent Maya](figures/viz-classifier-by-type-1.png)
 
 I also found that with Maya numbers, numeral classifiers overwhelmingly occur in the first word of the 4-grams, affixed to the number (Fig. 3). This distribution mirrors modern Maya usage, where classifiers are typically affixed directly to the numeral. Out of 80 classifiers, 60 were in the first word, 5 in the second, 7 in the third, 8 in the fourth. Now, the over-representation with Maya and Spanish numbers applies here, too. If a number is multiple words long, the numeral classifier will show up on the last word of the number, or if two numbers are just close to each other in a sentence, they may both have numeral classifiers tacked on. This is to say, some classifiers are definitely showing up in this analysis more than once and therefore being represented in multiple positions within the 4-grams.
 
-Figure 3
+**Figure 3**  
 ![Bar chart of classifier location within 4-grams](figures/viz-classifier-location-1.png)
 
 The other question for me, which was not really one of my research questions but I found myself curious about, was how frequently each observed classifier was used (Fig. 4). This took a bit of finagling to get a useful result, because if I just counted the classifiers by token, I got the whole words that the classifier was usually only a part of, which led to far too many individual tokens. I instead counted them by which classifier from the list was found within each token, which gave a more useful but still imperfect token frequency; one classifier shows up twice with two separate counts, as it is spelled two different ways in the data (*téen* vs *ten*). The full list of observed classifiers and their meanings is below:
@@ -73,7 +73,7 @@ The other question for me, which was not really one of my research questions but
 
 The most salient pattern is that *p’éel* overwhelmingly dominates classifier usage in these data, as it does in Modern Maya. Also noteworthy, three of the five (6, but two are just a spelling change) observed classifiers were the ones added from the data, and are no longer in common use in Maya. Only *p'éel* (inanimate objects) and *téen* (times) have persisted between these data samples and modern Maya.
 
-Figure 4
+**Figure 4**  
 ![Bar chart of classifier frequency](figures/viz-classifier-frequency-1.png)
 
 ## Conclusion and future research
