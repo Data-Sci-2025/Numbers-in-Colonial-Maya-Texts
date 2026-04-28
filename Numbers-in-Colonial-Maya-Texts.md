@@ -1,6 +1,6 @@
 # Numbers in Colonial Maya Texts
 Alex LaPrevotte
-2026-04-30
+2026-04-27
 
 My goal for processing these data is to get the text into a format I can
 work with. The data, available as part of “Los títulos de ebtún :
@@ -32,7 +32,7 @@ in word order and agglutination.
 
 ``` r
 # read in the text with each page as a row
-ebtun_text <-pdf_text("data/ebtun_sample.pdf")
+ebtun_text <- pdf_text("data/ebtun_sample.pdf")
 
 # lines to rows
 ebtun_text <- strsplit(ebtun_text, "\n")
@@ -40,15 +40,12 @@ ebtun_text <- strsplit(ebtun_text, "\n")
 # combine all pages into one vector
 ebtun_text <- unlist(ebtun_text)
 
+# currently 1 column, 7695 rows
 summary(ebtun_text)
 ```
 
        Length     Class      Mode 
          7695 character character 
-
-``` r
-# currently 1 column, 7695 rows
-```
 
 ## Combining morphological breakdowns into single units
 
@@ -66,6 +63,7 @@ ebtun_text <- str_replace_all(ebtun_text, "\\bø\\b", "")
 # convert to dataframe
 ebtun_data <- data.frame(line = ebtun_text)
 
+# still 1 column, 7695 rows
 summary(ebtun_data)
 ```
 
@@ -73,10 +71,6 @@ summary(ebtun_data)
      Length:7695       
      Class :character  
      Mode  :character  
-
-``` r
-# still 1 column, 7695 rows
-```
 
 ## Cleaning up the rows
 
@@ -88,6 +82,7 @@ ebtun_data <- ebtun_data %>% mutate(across(where(is.character), tolower))
 # eliminating chunks where one or more lines goes onto a second row, disrupting the 5-line chunk format
 ebtun_data <- ebtun_data[-c(1, 252, 598:618, 671:676, 679:684, 885:890, 1080:1085, 1117:1122, 1133:1136, 1141:1185, 1307:1312, 1401:2043, 2079, 2558:2591, 2616, 2882:2891, 2919, 3226, 3587:3592, 3760, 3906:3981, 4748, 4826, 5384:5419, 5440, 6050, 6454:6493, 6891, 7261, 7274:7282, 7295:7315, 7401, 7689:7692), ]
 
+# 1 column, 6696 rows
 summary(ebtun_data)
 ```
 
@@ -95,8 +90,6 @@ summary(ebtun_data)
          6696 character character 
 
 ``` r
-# currently 1 column, 6696 rows
-
 # again, we make it a data frame
 ebtun_data <- data.frame(line = ebtun_data)
 
@@ -111,6 +104,7 @@ ebtun_data <- ebtun_data %>%
 # make it a dataframe yet again
 ebtun_data <- data.frame(line = ebtun_data, stringsAsFactors = FALSE)
 
+# 1 column, 3970 rows
 summary(ebtun_data)
 ```
 
@@ -118,10 +112,6 @@ summary(ebtun_data)
      Length:3970       
      Class :character  
      Mode  :character  
-
-``` r
-# currently 1 column, 3970 rows
-```
 
 ## Breaking the data into chunks
 
@@ -134,8 +124,7 @@ ebtun_grouped <- ebtun_data |>
          type = rep(c("original", "Maya", "morphemes", "glossed", "Spanish"),
                     length.out=n()))
 
-view(ebtun_grouped)
-# currently 794 data frames, each three columns (line, group number, and type) and five rows
+# currently 3970 rows, three columns (line, group number, and type), 794 groups of five rows
 ```
 
 ## Removing rows not used in analysis
@@ -152,10 +141,7 @@ ebtun_chunks <- split(ebtun_grouped, ebtun_grouped$group)
 ## Split chunks by word
 
 ``` r
-# function: split chunk into words
-  # split each line by spaces
-  # find max words in the chunk and add NAs to standardize columns
-  # combine into data frame
+# function: split chunk into words and combine into one data frame
 split_chunk <- function(df_chunk) {
   split_words <- str_split(df_chunk$line, "\\s+", simplify = FALSE)
   max_words <- max(lengths(split_words))
@@ -170,8 +156,11 @@ split_chunk <- function(df_chunk) {
 # use function on chunks
 ebtun_chunks <- lapply(ebtun_chunks, split_chunk)
 
-#currently 2 rows, 4492 columns (794 chunks)
+# 794 chunks
+length(ebtun_chunks)
 ```
+
+    [1] 794
 
 ## NA wrangling
 
@@ -183,15 +172,11 @@ na_counts <- sapply(ebtun_chunks, function(df) sum(is.na(df)))
 # eliminate chunks with NAs
 ebtun_chunks_nona <- ebtun_chunks[!sapply(ebtun_chunks, function(df) any(is.na(df)))]
 
-# check to make sure number of chunks has decreased
+# down to 771 chunks
 length(ebtun_chunks_nona)
 ```
 
     [1] 771
-
-``` r
-# down to 771 chunks
-```
 
 ## Chunk concatenation
 
@@ -220,7 +205,7 @@ ebtun_long <- t(ebtun_combined)
 # convert back to data frame
 ebtun <- as.data.frame(ebtun_long)
 
-# currently 2 columns (morphological breakdown and morphological gloss), 4312 rows
+# 2 columns, 4312 rows
 summary(ebtun)
 ```
 
@@ -248,6 +233,7 @@ ebtun <- ebtun |>
   )
 
 # final form of "found" data
+# 2 columns (morphological breakdown and morphological gloss), 3989 rows
 str(ebtun)
 ```
 
@@ -255,16 +241,12 @@ str(ebtun)
      $ breakdown: chr  "tumen" "u-comisyon" "ajaw" "aj-tepal" ...
      $ gloss    : chr  "cause" "3a-comición" "gobernante" "ag-gobierno" ...
 
-``` r
-# currently 2 columns (morphological breakdown and morphological gloss), 3989 rows
-```
-
 ## Analysis
 
 ### Finding numbers
 
 ``` r
-# reading in lists of Spanish and Maya numbers (textual)
+# reading in lists of Spanish and Maya numbers
 esp_numbers <- read_lines("data/esp_numbers.txt")
 maya_numbers <- read_lines("data/maya_numbers.txt")
 
@@ -307,20 +289,20 @@ ebtun <- ebtun |>
       gloss_number
   )
 
-str(ebtun)
+# 6 columns, 3989 rows
+summary(ebtun)
 ```
 
-    'data.frame':   3989 obs. of  6 variables:
-     $ breakdown     : chr  "tumen" "u-comisyon" "ajaw" "aj-tepal" ...
-     $ gloss         : chr  "cause" "3a-comición" "gobernante" "ag-gobierno" ...
-     $ gloss_number  : logi  FALSE FALSE FALSE FALSE FALSE FALSE ...
-     $ numeral       : logi  FALSE FALSE FALSE FALSE FALSE FALSE ...
-     $ maya_number   : logi  FALSE FALSE FALSE FALSE FALSE FALSE ...
-     $ spanish_number: logi  FALSE FALSE FALSE FALSE FALSE FALSE ...
+      breakdown            gloss           gloss_number     numeral       
+     Length:3989        Length:3989        Mode :logical   Mode :logical  
+     Class :character   Class :character   FALSE:3826      FALSE:3966     
+     Mode  :character   Mode  :character   TRUE :163       TRUE :23       
+     maya_number     spanish_number 
+     Mode :logical   Mode :logical  
+     FALSE:3883      FALSE:3955     
+     TRUE :106       TRUE :34       
 
 ``` r
-#currently 6 columns, 3988 rows
-
 # counting how many numerals, Maya numbers, and Spanish numbers are in the data
 number_counts <- data.frame(
   type = c("numeral", "maya_number", "spanish_number"),
@@ -330,14 +312,7 @@ number_counts <- data.frame(
     sum(ebtun$spanish_number, na.rm = TRUE)
   )
 )
-
-number_counts
 ```
-
-                type count
-    1        numeral    23
-    2    maya_number   106
-    3 spanish_number    34
 
 ### Creating 4-grams
 
@@ -418,7 +393,7 @@ cn_pairs <- bind_rows(
 ) |>
   filter(cn == TRUE)
 
-# I used this to visually review things glossed as numeral classifiers, but with which I was not familiar
+# I used this to visually review things glossed as numeral classifiers, but with which I was not familiar, un-comment to view
 # view(cn_pairs)
 
 # adding the other classifiers to the existing vector
@@ -433,7 +408,7 @@ classifier_pattern <- paste0(
   "($|-)"
 )
 
-# looking for classifier locations in 4_grams
+# looking for classifier locations in 4-grams
 number_4grams <- number_4grams |>
   mutate(
     c1 = str_detect(str_trim(b1), classifier_pattern),
@@ -451,7 +426,16 @@ classifier_counts <- number_4grams |>
     token3 = sum(c3, na.rm = TRUE),
     token4 = sum(c4, na.rm = TRUE)
   )
+
+classifier_counts
 ```
+
+    # A tibble: 3 × 5
+      number_type token1 token2 token3 token4
+      <chr>        <int>  <int>  <int>  <int>
+    1 maya            60      5      7      8
+    2 numeral          0      0      0      0
+    3 spanish          0      0      0      0
 
 ### List of 4-grams with classifiers
 
@@ -466,7 +450,8 @@ number_4grams <- number_4grams |>
 classifier_4grams <- number_4grams |>
   filter(classifier_any)
 
-view(classifier_4grams)
+#list of all 4-grams containing classifiers, un-comment to view
+#view(classifier_4grams)
 ```
 
 ## Data Visualization
@@ -483,22 +468,22 @@ number_counts
     3 spanish_number    34
 
 ``` r
-# stacked bar chart
+# bar graph
 ggplot(
   number_counts,
-  aes(x = "", y = count, fill = type)
+  aes(x = type, y = count, fill = type)
 ) +
   geom_col(width = 0.6) +
   labs(
     title = "Distribution of Number Types",
     fill = "Type",
-    x = NULL,
+    x = "Type",
     y = "Count"
   ) +
   theme_minimal()
 ```
 
-![](data_visualization/viz-number-by-type-1.png)
+![](figures/viz-number-by-type-1.png)
 
 ### Classifier occurence by number type
 
@@ -529,7 +514,7 @@ ggplot(classifier_language_counts, aes(x = "", y = n, fill = number_type)) +
   theme_void()
 ```
 
-![](data_visualization/viz-classifier-by-type-1.png)
+![](figures/viz-classifier-by-type-1.png)
 
 ### Classifier location
 
@@ -551,6 +536,19 @@ classifier_position_counts_simple <- classifier_position_counts |>
   group_by(position) |>
   summarise(count = sum(count), .groups = "drop")
 
+# classifier positions simplified
+classifier_position_counts_simple
+```
+
+    # A tibble: 4 × 2
+      position count
+      <chr>    <int>
+    1 1           60
+    2 2            5
+    3 3            7
+    4 4            8
+
+``` r
 # bar graph
 # and I added the orange from the pie chart for visual consistency
 ggplot(classifier_position_counts_simple,
@@ -564,7 +562,7 @@ ggplot(classifier_position_counts_simple,
   theme_minimal()
 ```
 
-![](data_visualization/viz-classifier-location-1.png)
+![](figures/viz-classifier-location-1.png)
 
 ### Classifier frequency
 
@@ -577,6 +575,21 @@ classifier_freq <- number_4grams |>
   mutate(classifier = str_match(token, classifier_pattern)[,3]) |>
   count(classifier, sort = TRUE)
 
+# frequency by classdifier
+classifier_freq
+```
+
+    # A tibble: 6 × 2
+      classifier     n
+      <chr>      <int>
+    1 p'éel         38
+    2 p'is          20
+    3 k'al          15
+    4 ten            3
+    5 tsuk           2
+    6 téen           2
+
+``` r
 # bar graph
 ggplot(classifier_freq,
        aes(x = reorder(classifier, n), y = n)) +
@@ -590,7 +603,7 @@ ggplot(classifier_freq,
   theme_minimal()
 ```
 
-![](data_visualization/viz-classifier-frequency-1.png)
+![](figures/viz-classifier-frequency-1.png)
 
 ``` r
 sessionInfo()
