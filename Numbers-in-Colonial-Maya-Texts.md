@@ -3,9 +3,9 @@ Alex LaPrevotte
 2026-04-27
 
 My goal for processing these data is to get the text into a format I can
-work with. The data, available as part of “Los títulos de ebtún :
-transcripción, traducción y análisis histórico,” the PhD dissertation of
-Dr. Julien Machault, which can be found
+work with. The data, available as part of *Los títulos de ebtún
+:transcripción, traducción y análisis histórico,* the PhD dissertation
+of Dr. Julien Machault, which can be found
 [here](https://tesiunamdocumentos.dgb.unam.mx/ptd2025/abr_jun/0869324/Index.html),
 are currently in a PDF, broken into chunks of five lines:
 
