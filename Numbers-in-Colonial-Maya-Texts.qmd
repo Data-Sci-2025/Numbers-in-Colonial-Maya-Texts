@@ -380,8 +380,6 @@ classifier_counts <- number_4grams |>
     token3 = sum(c3, na.rm = TRUE),
     token4 = sum(c4, na.rm = TRUE)
   )
-
-classifier_counts
 ```
 
 ### List of 4-grams with classifiers

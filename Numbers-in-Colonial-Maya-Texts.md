@@ -426,16 +426,7 @@ classifier_counts <- number_4grams |>
     token3 = sum(c3, na.rm = TRUE),
     token4 = sum(c4, na.rm = TRUE)
   )
-
-classifier_counts
 ```
-
-    # A tibble: 3 × 5
-      number_type token1 token2 token3 token4
-      <chr>        <int>  <int>  <int>  <int>
-    1 maya            60      5      7      8
-    2 numeral          0      0      0      0
-    3 spanish          0      0      0      0
 
 ### List of 4-grams with classifiers
 
